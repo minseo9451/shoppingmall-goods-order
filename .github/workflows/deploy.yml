@@ -42,4 +42,10 @@ jobs:
             docker stop app || true
             docker rm app || true
             docker rmi app || true
-            docker bu
+            docker build -t app .
+            docker run -d -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=${{ secrets.DB_URL }} \
+              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
+              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              --name app app

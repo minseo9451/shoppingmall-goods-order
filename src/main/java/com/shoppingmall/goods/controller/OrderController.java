@@ -3,6 +3,7 @@ package com.shoppingmall.goods.controller;
 import com.shoppingmall.goods.Service.OrderService;
 import com.shoppingmall.goods.dto.OrderCreateRequestDto;
 import com.shoppingmall.goods.entity.Orders;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public Orders create(@RequestBody OrderCreateRequestDto dto) {
+    public Orders create(@Valid @RequestBody OrderCreateRequestDto dto) {
         String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return orderService.createOrder(userId, dto);
     }

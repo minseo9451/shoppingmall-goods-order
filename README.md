@@ -1,388 +1,137 @@
-# 🛒 Shoppingmall Goods Order API
+# Shoppingmall Goods Order API
 
-> Java JDBC 기반으로 개발한 쇼핑몰 프로젝트를 **Spring Boot + JPA + Spring Security**로 전환한 RESTful API 서버
+Java JDBC로 구현한 쇼핑몰 프로젝트를 Spring Boot + JPA + Spring Security로 전환한 RESTful API 서버입니다.
 
-<br>
-
-## 🔗 배포 링크
-
-| 항목 | 링크 |
-|------|------|
-| **Swagger UI** | http://54.180.26.225:8080/swagger-ui/index.html |
-| **API Base URL** | http://54.180.26.225:8080 |
+**Swagger UI** → http://54.180.26.225:8080/swagger-ui/index.html
 
 <br>
 
-## 🛠 기술 스택
+## 프로젝트 배경
 
-| 분류 | 기술 |
-|------|------|
-| Language | Java 21 |
-| Framework | Spring Boot 4.0 |
-| ORM | Spring Data JPA, Hibernate 7 |
-| Security | Spring Security 7, JWT (jjwt 0.11.5) |
-| Database | MySQL 8.0 |
-| API Docs | SpringDoc OpenAPI (Swagger UI) |
-| Build | Maven |
-| Container | Docker, Docker Compose |
-| CI/CD | GitHub Actions |
-| Server | AWS EC2 (Ubuntu) |
+JDBC + 순수 SQL로 작성한 기존 코드를 Spring 생태계로 전환하는 것이 목표였습니다. 단순 포팅이 아니라, 전환 과정에서 만나는 **Spring Security 설정 충돌, Docker 컨테이너 기동 순서 문제, CI/CD 파이프라인 트러블슈팅** 등 실제 운영 환경에서 생기는 문제들을 직접 해결하는 데 집중했습니다.
 
 <br>
 
-## ⚙️ 시스템 아키텍처
+## 기술 스택
+
+Spring Boot 4.0 · Spring Security 7 · Spring Data JPA · MySQL 8.0 · JWT · Docker · GitHub Actions · AWS EC2
+
+<br>
+
+## 아키텍처
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   GitHub Repository                  │
-│                                                      │
-│  push → main branch                                  │
-└──────────────────────┬──────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│                  GitHub Actions CI/CD                │
-│                                                      │
-│  1. JDK 21 Setup                                    │
-│  2. mvn clean package -DskipTests                   │
-│  3. SSH → jar + Dockerfile to EC2                   │
-│  4. SSH → docker build & docker compose up          │
-└──────────────────────┬──────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│                 AWS EC2 (Ubuntu)                     │
-│                                                      │
-│  ┌─────────────────┐    ┌────────────────────────┐  │
-│  │   app container  │    │     db container       │  │
-│  │  Spring Boot    │◄──►│     MySQL 8.0          │  │
-│  │  :8080          │    │     :3306              │  │
-│  └─────────────────┘    └────────────────────────┘  │
-│         Docker Compose (healthcheck 연동)             │
-└─────────────────────────────────────────────────────┘
+GitHub push → GitHub Actions (Maven 빌드 → SSH/SCP → EC2)
+                                                        │
+                                              ┌─────────▼─────────┐
+                                              │   Docker Compose  │
+                                              │                   │
+                                              │  ┌─────────────┐  │
+                                              │  │  Spring App │  │
+                                              │  │   :8080     │  │
+                                              │  └──────┬──────┘  │
+                                              │         │ depends_on (healthcheck)
+                                              │  ┌──────▼──────┐  │
+                                              │  │  MySQL 8.0  │  │
+                                              │  │   :3306     │  │
+                                              │  └─────────────┘  │
+                                              └───────────────────┘
 ```
 
 <br>
 
-## 📁 프로젝트 구조
+## ERD
 
 ```
-src/main/java/com/shoppingmall/goods/
-├── config/
-│   ├── JwtFilter.java          # JWT 인증 필터
-│   ├── JwtUtil.java            # JWT 토큰 생성/검증
-│   ├── SecurityConfig.java     # Spring Security 설정
-│   └── SwaggerConfig.java      # Swagger 설정
-├── controller/
-│   ├── AuthController.java     # 회원가입, 로그인
-│   ├── CustomerController.java # 회원 관리
-│   ├── GoodsController.java    # 상품 관리
-│   ├── OrderController.java    # 주문 관리
-│   └── CartController.java     # 장바구니 관리
-├── Service/
-│   ├── CustomerService.java
-│   ├── GoodsService.java
-│   ├── OrderService.java       # 주문 생성 핵심 로직
-│   └── CartService.java
-├── Repository/
-│   ├── CustomerRepository.java
-│   ├── GoodsRepository.java
-│   ├── OrdersRepository.java
-│   ├── OrderLineRepository.java
-│   └── CartRepository.java
-├── entity/
-│   ├── Customer.java
-│   ├── Goods.java
-│   ├── Orders.java
-│   ├── OrderLine.java
-│   └── Cart.java
-└── dto/
-    ├── RegisterRequestDto.java
-    ├── LoginRequestDto.java
-    ├── CustomerResponseDto.java
-    ├── OrderCreateRequestDto.java
-    └── OrderItemDto.java
+Customer ──┐
+           ├──► Orders ──► OrderLine ◄── Goods
+           │
+           └──► Cart ◄──────────────── Goods
 ```
+
+| 테이블 | 주요 컬럼 |
+|--------|-----------|
+| Customer | userId(PK), userPwd, userName, role |
+| Orders | orderId(PK, AI), userId(FK), address, totalAmount |
+| OrderLine | orderLineId(PK, AI), orderId(FK), goodsId(FK), unitPrice, qty, amount |
+| Goods | goodsId(PK), goodsName, goodsPrice, stock |
+| Cart | cartId(PK, AI), userId, goodsId(FK), qty |
 
 <br>
 
-## 🗄 ERD
+## 핵심 구현
+
+### 트랜잭션 기반 주문 생성
+
+주문 한 건에 여러 상품이 포함될 수 있고, 중간에 재고가 부족하면 전체를 롤백해야 합니다.
 
 ```
-┌──────────────┐        ┌──────────────────┐        ┌───────────────┐
-│   Customer   │        │     Orders       │        │   OrderLine   │
-├──────────────┤        ├──────────────────┤        ├───────────────┤
-│ userId (PK)  │──┐     │ orderId (PK, AI) │──┐     │ orderLineID   │
-│ userPwd      │  └────►│ userId (FK)      │  └────►│ (PK, AI)      │
-│ userName     │        │ orderDate        │        │ orderId (FK)  │
-│ regDate      │        │ address          │        │ goodsId (FK)  │
-│ role         │        │ totalAmount      │        │ unitPrice     │
-└──────────────┘        └──────────────────┘        │ qty           │
-                                                     │ amount        │
-┌──────────────┐        ┌──────────────────┐        └───────────────┘
-│    Goods     │        │      Cart        │
-├──────────────┤        ├──────────────────┤
-│ goodsId (PK) │◄──────►│ cartId (PK, AI) │
-│ goodsName    │        │ userId           │
-│ goodsPrice   │        │ goodsId (FK)     │
-│ stock        │        │ qty              │
-│ regdate      │        └──────────────────┘
-└──────────────┘
+POST /order
+  ├── 1. 전체 상품 재고 선검증 (부족 시 즉시 예외 → 롤백)
+  ├── 2. totalAmount = Σ(단가 × 수량) 계산
+  ├── 3. Orders 저장 (userId는 JWT SecurityContext에서 추출)
+  ├── 4. OrderLine 저장 (상품별 주문 상세)
+  └── 5. 재고 차감
 ```
 
-<br>
-
-## 📌 API 명세
-
-### 🔓 인증 (Auth) — 인증 불필요
-
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/auth/register` | 회원가입 |
-| POST | `/auth/login` | 로그인 (JWT 토큰 발급) |
-
-<details>
-<summary>Request / Response 예시</summary>
-
-**POST /auth/register**
-```json
-// Request
-{
-  "userId": "user1",
-  "userPwd": "user1234",
-  "userName": "홍길동"
-}
-
-// Response
-"회원가입 완료"
-```
-
-**POST /auth/login**
-```json
-// Request
-{
-  "userId": "user1",
-  "userPwd": "user1234"
-}
-
-// Response
-"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6..."
-```
-</details>
+재고 검증을 저장 전에 몰아서 처리함으로써, 일부만 저장된 채 롤백되는 부분 실패 상황을 방지했습니다.
 
 ---
 
-### 🔒 회원 (Customer) — JWT 필요
+### Spring Security 7 + JWT 충돌 해결
 
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/customer` | 전체 회원 조회 |
-| GET | `/customer/{userId}` | 특정 회원 조회 |
-| POST | `/customer` | 회원 등록 |
-| DELETE | `/customer/{userId}` | 회원 삭제 |
+Spring Boot 4.x에서 `UserDetailsService` 빈을 등록하지 않으면 `InMemoryUserDetailsManager`가 자동 설정되어, JWT 필터와 충돌합니다. JWT 기반 Stateless 인증에서는 `UserDetailsService`가 실제로 필요 없으므로, 예외를 던지는 빈을 명시적으로 등록해 자동 설정을 비활성화했습니다.
+
+```java
+@Bean
+public UserDetailsService userDetailsService() {
+    return username -> { throw new UsernameNotFoundException(username); };
+}
+```
 
 ---
 
-### 🔒 상품 (Goods) — JWT 필요
+### Docker Compose healthcheck로 기동 순서 보장
 
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/goods` | 전체 상품 조회 |
-| GET | `/goods/{goodsId}` | 특정 상품 조회 |
-| POST | `/goods` | 상품 등록 |
-| PUT | `/goods/{goodsId}` | 상품 수정 |
-| DELETE | `/goods/{goodsId}` | 상품 삭제 |
+앱 컨테이너가 MySQL보다 먼저 기동되면 `Connection refused`로 즉시 종료됩니다. `healthcheck`와 `depends_on: condition: service_healthy` 조합으로 MySQL이 완전히 준비된 후에만 앱이 시작됩니다.
 
-<details>
-<summary>Request / Response 예시</summary>
+```yaml
+db:
+  healthcheck:
+    test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+    interval: 10s
+    retries: 5
 
-**POST /goods**
-```json
-{
-  "goodsId": "G001",
-  "goodsName": "나이키 운동화",
-  "goodsPrice": 120000,
-  "stock": 50,
-  "regdate": "2026-06-08T00:00:00"
-}
-```
-</details>
-
----
-
-### 🔒 주문 (Order) — JWT 필요
-
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/order` | 전체 주문 조회 |
-| GET | `/order/{orderId}` | 특정 주문 조회 |
-| GET | `/order/user/{userId}` | 특정 회원 주문 조회 |
-| POST | `/order` | 주문 생성 |
-
-<details>
-<summary>Request / Response 예시</summary>
-
-**POST /order**
-```json
-// Request
-{
-  "address": "서울시 강남구 테헤란로 123",
-  "items": [
-    { "goodsId": "G001", "qty": 2 },
-    { "goodsId": "G002", "qty": 1 }
-  ]
-}
-
-// Response
-{
-  "orderId": 1,
-  "orderDate": "2026-06-08T08:30:00",
-  "address": "서울시 강남구 테헤란로 123",
-  "totalAmount": 240000,
-  "userId": "user1"
-}
-```
-</details>
-
----
-
-### 🔒 장바구니 (Cart) — JWT 필요
-
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/cart/{userId}` | 특정 회원 장바구니 조회 |
-| POST | `/cart` | 장바구니 추가 |
-| DELETE | `/cart/{cartId}` | 장바구니 항목 삭제 |
-
-<details>
-<summary>Request / Response 예시</summary>
-
-**POST /cart**
-```json
-{
-  "userId": "user1",
-  "goodsId": "G001",
-  "qty": 2
-}
-```
-</details>
-
-<br>
-
-## 🔐 인증 방식
-
-JWT(JSON Web Token) 기반 Stateless 인증을 사용합니다.
-
-```
-1. POST /auth/login 으로 로그인
-2. 응답으로 JWT 토큰 수신
-3. 이후 모든 요청 Header에 포함:
-   Authorization: Bearer {token}
-```
-
-> Swagger에서 테스트 시 우측 상단 **Authorize 🔒** 버튼 클릭 후 `Bearer {토큰}` 입력
-
-<br>
-
-## 💡 핵심 구현 내용
-
-### 주문 생성 트랜잭션 처리
-
-주문 생성 시 아래 작업이 하나의 트랜잭션으로 처리됩니다.
-
-```
-POST /order 요청
-  ├── 1. 상품 존재 여부 확인
-  ├── 2. 재고 수량 확인 (부족 시 예외 발생 → 전체 롤백)
-  ├── 3. 총 결제금액 자동 계산 (단가 × 수량 합산)
-  ├── 4. Orders 저장 (JWT에서 userId 자동 추출)
-  ├── 5. OrderLine 저장 (상품별 주문 상세)
-  └── 6. Goods 재고 차감
-```
-
-### Spring Security + JWT 인증 흐름
-
-```
-HTTP 요청
-  │
-  ▼
-JwtFilter (OncePerRequestFilter)
-  ├── Authorization 헤더 없음 → 익명 사용자로 통과
-  └── Bearer 토큰 있음
-        ├── 토큰 검증 실패 → 익명 사용자로 통과
-        └── 토큰 검증 성공 → SecurityContext에 인증 정보 등록
-  │
-  ▼
-AuthorizationFilter
-  ├── /auth/**, /swagger-ui/**, /v3/api-docs/** → 허용
-  └── 그 외 → 인증 여부 확인
+app:
+  depends_on:
+    db:
+      condition: service_healthy
 ```
 
 <br>
 
-## 🚀 로컬 실행 방법
+## CI/CD
 
-### 사전 요구사항
-- Java 21
-- Docker & Docker Compose
-
-### 실행
-
-```bash
-# 1. 레포지토리 클론
-git clone https://github.com/minseo9451/shoppingmall-goods-order.git
-cd shoppingmall-goods-order
-
-# 2. 환경변수 설정
-export SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/shoppingmall_db
-export SPRING_DATASOURCE_USERNAME=root
-export SPRING_DATASOURCE_PASSWORD=your_password
-export JWT_SECRET=your_secret_key_minimum_32_characters_long
-
-# 3. Docker Compose 실행
-docker compose up -d
-```
+`main` 브랜치 push 시 GitHub Actions가 EC2에 자동 배포합니다.
 
 ```
-http://localhost:8080/swagger-ui/index.html
+push → JDK 21 + Maven 빌드 → SCP로 jar + Dockerfile 전송 → EC2에서 docker build + compose up
 ```
+
+**데이터 영속성**: docker-compose.yml에 named volume(`mysql_data`)을 설정해, 배포 시 컨테이너가 재시작되어도 DB 데이터가 유지됩니다.
+
+**환경변수 관리**: DB 접속 정보, JWT 시크릿 등 민감 정보는 모두 GitHub Secrets로 관리하며, 배포 시 docker-compose.yml에 환경변수로 주입됩니다.
 
 <br>
 
-## 🔄 CI/CD 파이프라인
+## API
 
-`main` 브랜치에 push 시 자동으로 EC2에 배포됩니다.
+전체 명세는 Swagger UI에서 확인하세요. JWT가 필요한 엔드포인트는 `/auth/login`으로 토큰 발급 후 Authorize에 `Bearer {token}`을 입력하면 됩니다.
 
-```
-push to main
-    │
-    ▼
-GitHub Actions
-    ├── 1. JDK 21 설치
-    ├── 2. Maven 빌드
-    ├── 3. EC2에 jar + Dockerfile 전송 (SSH/SCP)
-    └── 4. EC2에서 컨테이너 재배포
-            ├── docker compose down
-            ├── docker build -t app .
-            └── docker compose up -d
-```
-
-**GitHub Secrets 설정 목록**
-
-| Secret | 설명 |
-|--------|------|
-| `EC2_HOST` | EC2 퍼블릭 IP |
-| `EC2_KEY` | EC2 SSH 프라이빗 키 |
-| `DB_USERNAME` | MySQL 사용자명 |
-| `DB_PASSWORD` | MySQL 비밀번호 |
-| `DB_ROOT_PASSWORD` | MySQL root 비밀번호 |
-| `DB_URL_DOCKER` | Docker 내부 DB 접속 URL |
-| `JWT_SECRET` | JWT 서명 키 |
-
-<br>
-
-## 👤 개발자
-
-| 이름 | GitHub |
-|------|--------|
-| 신민서 | [@minseo9451](https://github.com/minseo9451) |
+| 도메인 | 주요 엔드포인트 |
+|--------|----------------|
+| Auth | POST `/auth/register`, POST `/auth/login` |
+| Customer | GET/POST `/customer`, DELETE `/customer/{userId}` |
+| Goods | GET/POST/PUT/DELETE `/goods` |
+| Order | GET `/order`, POST `/order`, GET `/order/user/{userId}` |
+| Cart | GET `/cart/{userId}`, POST `/cart`, DELETE `/cart/{cartId}` |

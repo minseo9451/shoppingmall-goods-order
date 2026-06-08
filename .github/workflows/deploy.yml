@@ -20,22 +20,18 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      - name: Prepare EC2 directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
-          script: mkdir -p /home/ubuntu/app/target
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy jar to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
-          source: "target/*.jar,Dockerfile"
-          target: "/home/ubuntu/app"
+      - name: Copy files to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} "mkdir -p /home/ubuntu/app/target"
+          scp -i ~/.ssh/id_rsa target/*.jar ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/target/
+          scp -i ~/.ssh/id_rsa Dockerfile ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -72,7 +68,7 @@ jobs:
                   SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
                   JWT_SECRET: ${{ secrets.JWT_SECRET }}
                   SPRING_JPA_HIBERNATE_DDL_AUTO: update
-                  SPRING_JPA_SHOW_SQL: true
+                  SPRING_JPA_SHOW_SQL: "true"
                 depends_on:
                   db:
                     condition: service_healthy

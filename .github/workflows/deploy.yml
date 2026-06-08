@@ -61,7 +61,7 @@ jobs:
                 depends_on:
                   - db
             EOF
-            docker-compose down || true
+            docker compose down || true
             docker rmi app || true
             docker build -t app .
-            docker-compose up -d
+            docker compose up -d

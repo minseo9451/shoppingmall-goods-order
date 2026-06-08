@@ -53,6 +53,8 @@ jobs:
                   MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
                 ports:
                   - "3306:3306"
+                volumes:
+                  - mysql_data:/var/lib/mysql
                 healthcheck:
                   test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${{ secrets.DB_ROOT_PASSWORD }}"]
                   interval: 10s
@@ -72,6 +74,8 @@ jobs:
                 depends_on:
                   db:
                     condition: service_healthy
+            volumes:
+              mysql_data:
             EOF
             docker compose down || true
             docker rmi app || true

@@ -1,8 +1,10 @@
 package com.shoppingmall.goods.controller;
 
 import com.shoppingmall.goods.Service.OrderService;
+import com.shoppingmall.goods.dto.OrderCreateRequestDto;
 import com.shoppingmall.goods.entity.Orders;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,22 +17,23 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping
-    public List<Orders> findAll(){
+    public List<Orders> findAll() {
         return orderService.findAll();
     }
 
     @GetMapping("/{orderId}")
-    public Orders findById(@PathVariable Integer orderId){
+    public Orders findById(@PathVariable Integer orderId) {
         return orderService.findById(orderId);
     }
 
     @GetMapping("/user/{userId}")
-    public List<Orders> findByUserId(@PathVariable String userId){
+    public List<Orders> findByUserId(@PathVariable String userId) {
         return orderService.findByUserId(userId);
     }
 
     @PostMapping
-    public Orders create (@RequestBody Orders orders){
-        return orderService.save(orders);
+    public Orders create(@RequestBody OrderCreateRequestDto dto) {
+        String userId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return orderService.createOrder(userId, dto);
     }
 }

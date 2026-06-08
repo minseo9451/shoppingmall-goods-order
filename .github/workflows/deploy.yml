@@ -20,6 +20,15 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      - name: Copy jar to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: "target/*.jar,Dockerfile"
+          target: "/home/ubuntu/app"
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -27,19 +36,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/ubuntu
-            rm -rf shoppingmall-goods-order
-            git clone https://github.com/minseo9451/shoppingmall-goods-order.git
-            cd shoppingmall-goods-order
-            apt-get install -y maven || true
-            mvn clean package -DskipTests
+            cd /home/ubuntu/app/target
+            mv *.jar ../app.jar
+            cd /home/ubuntu/app
             docker stop app || true
             docker rm app || true
             docker rmi app || true
-            docker build -t app .
-            docker run -d -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=${{ secrets.DB_URL }} \
-              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              --name app app
+            docker bu

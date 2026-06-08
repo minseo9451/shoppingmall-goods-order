@@ -37,13 +37,31 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd /home/ubuntu/app
-            docker stop app || true
-            docker rm app || true
+            cat > docker-compose.yml << EOF
+            version: '3'
+            services:
+              db:
+                image: mysql:8.0
+                environment:
+                  MYSQL_ROOT_PASSWORD: root1234
+                  MYSQL_DATABASE: shoppingmall_db
+                  MYSQL_USER: ${{ secrets.DB_USERNAME }}
+                  MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                ports:
+                  - "3306:3306"
+              app:
+                image: app
+                ports:
+                  - "8080:8080"
+                environment:
+                  SPRING_DATASOURCE_URL: ${{ secrets.DB_URL_DOCKER }}
+                  SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+                  SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+                depends_on:
+                  - db
+            EOF
+            docker-compose down || true
             docker rmi app || true
             docker build -t app .
-            docker run -d -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=${{ secrets.DB_URL }} \
-              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              --name app app
+            docker-compose up -d

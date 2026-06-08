@@ -1,0 +1,23 @@
+version: '3'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: shoppingmall_db
+      MYSQL_USER: minseo3347
+      MYSQL_PASSWORD: alstj9451!
+    ports:
+      - "3306:3306"
+
+  app:
+    image: app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/shoppingmall_db
+      SPRING_DATASOURCE_USERNAME: minseo3347
+      SPRING_DATASOURCE_PASSWORD: alstj9451!
+      JWT_SECRET: shoppingmallgoodsordersecretkey1234567890
+    depends_on:
+      - db

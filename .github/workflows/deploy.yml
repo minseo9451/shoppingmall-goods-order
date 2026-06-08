@@ -63,7 +63,8 @@ jobs:
                   SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
                   SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
                   JWT_SECRET: ${{ secrets.JWT_SECRET }}
-                  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
+                  SPRING_JPA_HIBERNATE_DDL_AUTO: update
+                  SPRING_JPA_SHOW_SQL: true
                 depends_on:
                   db:
                     condition: service_healthy

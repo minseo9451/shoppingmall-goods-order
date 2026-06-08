@@ -36,8 +36,6 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/ubuntu/app/target
-            mv *.jar ../app.jar
             cd /home/ubuntu/app
             docker stop app || true
             docker rm app || true

@@ -19,7 +19,8 @@ public class OrderService {
     }
 
     public Orders findById(Integer orderId){
-        return ordersRepository.findById(orderId).orElseThrow();
+        return ordersRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다: " + orderId));
     }
 
     public List<Orders> findByUserId(String userId){

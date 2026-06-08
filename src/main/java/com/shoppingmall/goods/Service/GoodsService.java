@@ -18,7 +18,8 @@ public class GoodsService {
     }
 
     public Goods findById(String goodsId){
-        return goodsRepository.findById(goodsId).orElseThrow();
+        return goodsRepository.findById(goodsId)
+                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다: " + goodsId));
     }
 
     public Goods save(Goods goods){

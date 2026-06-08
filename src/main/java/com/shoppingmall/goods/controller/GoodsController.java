@@ -30,7 +30,8 @@ public class GoodsController {
     }
 
     @PutMapping("/{goodsId}")
-    public void update(@PathVariable String goodsId,@RequestBody Goods goods){
+    public void update(@PathVariable String goodsId, @RequestBody Goods goods){
+        goods.setGoodsId(goodsId);
         goodsService.save(goods);
     }
 

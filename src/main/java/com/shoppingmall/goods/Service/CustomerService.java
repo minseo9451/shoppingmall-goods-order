@@ -18,7 +18,8 @@ public class CustomerService {
     }
 
     public Customer findById(String userId) {
-        return customerRepository.findById(userId).orElseThrow();
+        return customerRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
     }
 
     public Customer save(Customer customer) {

@@ -43,12 +43,17 @@ jobs:
               db:
                 image: mysql:8.0
                 environment:
-                  MYSQL_ROOT_PASSWORD: root1234
+                  MYSQL_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
                   MYSQL_DATABASE: shoppingmall_db
                   MYSQL_USER: ${{ secrets.DB_USERNAME }}
                   MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
                 ports:
                   - "3306:3306"
+                healthcheck:
+                  test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${{ secrets.DB_ROOT_PASSWORD }}"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
               app:
                 image: app
                 ports:
@@ -59,7 +64,8 @@ jobs:
                   SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
                   JWT_SECRET: ${{ secrets.JWT_SECRET }}
                 depends_on:
-                  - db
+                  db:
+                    condition: service_healthy
             EOF
             docker compose down || true
             docker rmi app || true

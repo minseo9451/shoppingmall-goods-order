@@ -2,6 +2,7 @@ package com.shoppingmall.goods.Service;
 
 import com.shoppingmall.goods.Repository.GoodsRepository;
 import com.shoppingmall.goods.entity.Goods;
+import com.shoppingmall.goods.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,7 @@ public class GoodsService {
 
     public Goods findById(String goodsId){
         return goodsRepository.findById(goodsId)
-                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다: " + goodsId));
+                .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다: " + goodsId));
     }
 
     public Goods save(Goods goods){

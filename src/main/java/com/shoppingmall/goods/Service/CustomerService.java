@@ -2,6 +2,7 @@ package com.shoppingmall.goods.Service;
 
 import com.shoppingmall.goods.Repository.CustomerRepository;
 import com.shoppingmall.goods.entity.Customer;
+import com.shoppingmall.goods.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,7 @@ public class CustomerService {
 
     public Customer findById(String userId) {
         return customerRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다: " + userId));
     }
 
     public boolean existsById(String userId) {

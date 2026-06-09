@@ -8,6 +8,8 @@ import com.shoppingmall.goods.dto.OrderItemDto;
 import com.shoppingmall.goods.entity.Goods;
 import com.shoppingmall.goods.entity.OrderLine;
 import com.shoppingmall.goods.entity.Orders;
+import com.shoppingmall.goods.exception.InsufficientStockException;
+import com.shoppingmall.goods.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +31,7 @@ public class OrderService {
 
     public Orders findById(Integer orderId) {
         return ordersRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다: " + orderId));
+                .orElseThrow(() -> new NotFoundException("주문을 찾을 수 없습니다: " + orderId));
     }
 
     public List<Orders> findByUserId(String userId) {
@@ -42,9 +44,9 @@ public class OrderService {
         List<Goods> goodsList = dto.getItems().stream()
                 .map(item -> {
                     Goods goods = goodsRepository.findById(item.getGoodsId())
-                            .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다: " + item.getGoodsId()));
+                            .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다: " + item.getGoodsId()));
                     if (goods.getStock() < item.getQty()) {
-                        throw new RuntimeException("재고가 부족합니다: " + goods.getGoodsName());
+                        throw new InsufficientStockException("재고가 부족합니다: " + goods.getGoodsName());
                     }
                     return goods;
                 })

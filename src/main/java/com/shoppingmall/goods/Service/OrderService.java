@@ -40,10 +40,10 @@ public class OrderService {
 
     @Transactional
     public Orders createOrder(String userId, OrderCreateRequestDto dto) {
-        // 1. 재고 확인 및 총 금액 계산
+        // 1. 재고 확인 및 총 금액 계산 (비관적 락으로 동시 주문 race condition 방지)
         List<Goods> goodsList = dto.getItems().stream()
                 .map(item -> {
-                    Goods goods = goodsRepository.findById(item.getGoodsId())
+                    Goods goods = goodsRepository.findByIdForUpdate(item.getGoodsId())
                             .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다: " + item.getGoodsId()));
                     if (goods.getStock() < item.getQty()) {
                         throw new InsufficientStockException("재고가 부족합니다: " + goods.getGoodsName());

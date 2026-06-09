@@ -41,11 +41,6 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # Nginx 설치 (최초 1회)
-            if ! command -v nginx &> /dev/null; then
-              sudo apt update && sudo apt install nginx -y
-            fi
-
             # Nginx 설정 (certbot이 수정한 설정 보호 - 인증서 없을 때만 덮어씀)
             if [ ! -f /etc/letsencrypt/live/goodsorder.kro.kr/fullchain.pem ]; then
               sudo cp /home/ubuntu/app/goodsorder.conf /etc/nginx/sites-available/goodsorder

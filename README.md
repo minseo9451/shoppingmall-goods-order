@@ -16,15 +16,16 @@ JDBC + 순수 SQL로 작성한 기존 코드를 Spring 생태계로 전환하는
 
 ## 기술 스택
 
-| 분류 | 기술 |
-|------|------|
-| Backend | Spring Boot 4.0 · Spring Security 7 · Spring Data JPA |
-| Auth | JWT (jjwt 0.11) |
-| Database | MySQL 8.0 |
-| Infra | Docker · AWS EC2 |
-| CI/CD | GitHub Actions |
-| Docs | Springdoc OpenAPI 3.0 (Swagger UI) |
-| Test | JUnit 5 · Mockito |
+| 분류 | 기술 | 선택 이유 |
+|------|------|---------|
+| Backend | Spring Boot 4.0 · Spring Data JPA | JDBC 직접 사용 대비 반복 SQL 제거, 객체 중심 설계로 전환 |
+| Security | Spring Security 7 | 인증·인가 필터 체인 표준화, JWT 연동 용이 |
+| Auth | JWT (jjwt 0.11) | Stateless 서버 유지 — 세션 저장소 없이 수평 확장 가능 |
+| Database | MySQL 8.0 | 주문·상품·장바구니 간 관계 표현, 트랜잭션 보장 필요 |
+| Infra | Docker · AWS EC2 | 로컬·서버 환경 일관성 보장, 배포 재현성 확보 |
+| CI/CD | GitHub Actions | 별도 CI 서버 없이 레포와 통합, push 시 자동 배포 |
+| Docs | Springdoc OpenAPI 3.0 | 코드 기반 API 문서 자동화, Swagger UI 제공 |
+| Test | JUnit 5 · Mockito | 서비스 레이어 단위 테스트, DB 없이 빠른 검증 |
 
 <br>
 
@@ -276,6 +277,57 @@ push → JDK 21 + Maven 빌드 → SCP로 jar + Dockerfile 전송 → EC2에서 
 **데이터 영속성**: docker-compose.yml에 named volume(`mysql_data`)을 설정해, 배포 시 컨테이너가 재시작되어도 DB 데이터가 유지됩니다.
 
 **환경변수 관리**: DB 접속 정보, JWT 시크릿 등 민감 정보는 모두 GitHub Secrets로 관리하며, 배포 시 docker-compose.yml에 환경변수로 주입됩니다.
+
+<br>
+
+## 로컬 실행
+
+**사전 요구사항**: JDK 21, Maven, Docker
+
+```bash
+git clone https://github.com/minseo9451/shoppingmall-goods-order.git
+cd shoppingmall-goods-order
+mvn clean package -DskipTests
+```
+
+루트에 `docker-compose.yml` 생성 후 실행합니다.
+
+```yaml
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: shoppingmall_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+  app:
+    image: app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/shoppingmall_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      JWT_SECRET: local-secret-key-must-be-at-least-32-characters-long
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create
+    depends_on:
+      db:
+        condition: service_healthy
+```
+
+```bash
+docker build -t app .
+docker compose up -d
+```
+
+API 문서: `http://localhost:8080/swagger-ui/index.html`
 
 <br>
 

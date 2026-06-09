@@ -35,8 +35,10 @@ JDBC + 순수 SQL로 작성한 기존 코드를 Spring 생태계로 전환하는
 GitHub push → GitHub Actions (Maven 빌드 → SSH/SCP → EC2)
                                                         │
                                               ┌─────────▼─────────┐
-                                              │   Docker Compose  │
+                                              │        EC2        │
                                               │                   │
+                                              │  Nginx (80/443)   │
+                                              │   └── proxy_pass  │
                                               │  ┌─────────────┐  │
                                               │  │  Spring App │  │
                                               │  │   :8080     │  │

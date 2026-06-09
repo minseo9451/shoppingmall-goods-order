@@ -1,9 +1,11 @@
 package com.shoppingmall.goods.controller;
 
 import com.shoppingmall.goods.Service.CustomerService;
+import com.shoppingmall.goods.dto.ApiResponse;
 import com.shoppingmall.goods.dto.CustomerResponseDto;
 import com.shoppingmall.goods.entity.Customer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -21,30 +23,33 @@ public class CustomerController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<CustomerResponseDto> findAll(){
-        return customerService.findAll().stream()
+    public ResponseEntity<ApiResponse<List<CustomerResponseDto>>> findAll() {
+        List<CustomerResponseDto> result = customerService.findAll().stream()
                 .map(c -> new CustomerResponseDto(c.getUserId(), c.getUserName(), c.getRegDate(), c.getRole()))
                 .toList();
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @GetMapping("/{userId}")
-    public CustomerResponseDto findById(@PathVariable String userId){
+    public ResponseEntity<ApiResponse<CustomerResponseDto>> findById(@PathVariable String userId) {
         Customer c = customerService.findById(userId);
-        return new CustomerResponseDto(c.getUserId(), c.getUserName(), c.getRegDate(), c.getRole());
+        return ResponseEntity.ok(ApiResponse.ok(
+                new CustomerResponseDto(c.getUserId(), c.getUserName(), c.getRegDate(), c.getRole())));
     }
 
     @PostMapping
-    public CustomerResponseDto create(@RequestBody Customer customer){
+    public ResponseEntity<ApiResponse<CustomerResponseDto>> create(@RequestBody Customer customer) {
         customer.setUserPwd(passwordEncoder.encode(customer.getUserPwd()));
         customer.setRegDate(LocalDate.now());
         Customer saved = customerService.save(customer);
-        return new CustomerResponseDto(saved.getUserId(), saved.getUserName(), saved.getRegDate(), saved.getRole());
+        return ResponseEntity.status(201).body(ApiResponse.created(
+                new CustomerResponseDto(saved.getUserId(), saved.getUserName(), saved.getRegDate(), saved.getRole())));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{userId}")
-    public void delete(@PathVariable String userId){
+    public ResponseEntity<Void> delete(@PathVariable String userId) {
         customerService.deleteById(userId);
+        return ResponseEntity.noContent().build();
     }
-
 }

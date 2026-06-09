@@ -1,8 +1,10 @@
 package com.shoppingmall.goods.controller;
 
 import com.shoppingmall.goods.Service.GoodsService;
+import com.shoppingmall.goods.dto.ApiResponse;
 import com.shoppingmall.goods.entity.Goods;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,31 +18,32 @@ public class GoodsController {
     private final GoodsService goodsService;
 
     @GetMapping
-    public List<Goods> findAll(){
-        return goodsService.findAll();
+    public ResponseEntity<ApiResponse<List<Goods>>> findAll() {
+        return ResponseEntity.ok(ApiResponse.ok(goodsService.findAll()));
     }
 
     @GetMapping("/{goodsId}")
-    public Goods findById(@PathVariable String goodsId){
-        return goodsService.findById(goodsId);
+    public ResponseEntity<ApiResponse<Goods>> findById(@PathVariable String goodsId) {
+        return ResponseEntity.ok(ApiResponse.ok(goodsService.findById(goodsId)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public void create(@RequestBody Goods goods){
-         goodsService.save(goods);
+    public ResponseEntity<ApiResponse<Goods>> create(@RequestBody Goods goods) {
+        return ResponseEntity.status(201).body(ApiResponse.created(goodsService.save(goods)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{goodsId}")
-    public void update(@PathVariable String goodsId, @RequestBody Goods goods){
+    public ResponseEntity<ApiResponse<Goods>> update(@PathVariable String goodsId, @RequestBody Goods goods) {
         goods.setGoodsId(goodsId);
-        goodsService.save(goods);
+        return ResponseEntity.ok(ApiResponse.ok(goodsService.save(goods)));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{goodsId}")
-    public void delete(@PathVariable String goodsId){
+    public ResponseEntity<Void> delete(@PathVariable String goodsId) {
         goodsService.deleteById(goodsId);
+        return ResponseEntity.noContent().build();
     }
 }

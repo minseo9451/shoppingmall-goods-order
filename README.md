@@ -108,6 +108,53 @@ app:
       condition: service_healthy
 ```
 
+---
+
+### Bean Validation으로 입력값 검증
+
+컨트롤러에서 `@Valid`를 선언하면 DTO의 제약 조건을 자동으로 검증합니다.
+
+```java
+// RegisterRequestDto
+@NotBlank(message = "아이디를 입력해주세요.")
+@Size(min = 4, max = 20, message = "아이디는 4~20자여야 합니다.")
+private String userId;
+
+@NotBlank(message = "비밀번호를 입력해주세요.")
+@Size(min = 6, message = "비밀번호는 6자 이상이어야 합니다.")
+private String userPwd;
+```
+
+Service 계층이 아닌 DTO에 제약 조건을 선언함으로써, 유효하지 않은 요청이 비즈니스 로직에 도달하기 전에 차단됩니다.
+
+---
+
+### 회원가입 시 아이디 중복 확인
+
+저장 전에 `existsById()`로 중복 여부를 먼저 확인합니다. JPA의 `exists` 쿼리는 `SELECT 1`로 동작해 불필요한 엔티티 조회가 없습니다.
+
+```java
+if (customerService.existsById(dto.getUserId())) {
+    throw new RuntimeException("이미 사용 중인 아이디입니다: " + dto.getUserId());
+}
+```
+
+---
+
+### 장바구니 중복 상품 수량 합산
+
+같은 상품을 다시 담을 때 새 row를 생성하지 않고 기존 항목의 수량을 누적합니다.
+
+```java
+Optional<Cart> existing = cartRepository.findByUserIdAndGoodsId(cart.getUserId(), cart.getGoodsId());
+if (existing.isPresent()) {
+    Cart found = existing.get();
+    found.setQty(found.getQty() + cart.getQty());
+    return cartRepository.save(found);
+}
+return cartRepository.save(cart);
+```
+
 <br>
 
 ## CI/CD

@@ -2,7 +2,7 @@
 
 Java JDBC로 구현한 쇼핑몰 프로젝트를 Spring Boot + JPA + Spring Security로 전환한 RESTful API 서버입니다.
 
-**Swagger UI** → http://54.180.26.225:8080/swagger-ui/index.html
+**Swagger UI** → https://goodsorder.kro.kr/swagger-ui/index.html
 
 **포트폴리오 상세** → [Notion](https://app.notion.com/p/37a40491425b80d88940e952778e1b63)
 

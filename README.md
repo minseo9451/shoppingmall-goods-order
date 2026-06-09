@@ -4,6 +4,8 @@ Java JDBC로 구현한 쇼핑몰 프로젝트를 Spring Boot + JPA + Spring Secu
 
 **Swagger UI** → http://54.180.26.225:8080/swagger-ui/index.html
 
+**포트폴리오 상세** → [Notion](https://app.notion.com/p/37a40491425b80d88940e952778e1b63)
+
 <br>
 
 ## 프로젝트 배경
@@ -236,49 +238,13 @@ return cartRepository.save(cart);
 
 ## 트러블슈팅
 
-### Spring Security 7 + JWT 자동설정 충돌
+| 문제 | 원인 | 해결 |
+|------|------|------|
+| Spring Security 7 + JWT 충돌 | `InMemoryUserDetailsManager` 자동설정 | 예외 던지는 `UserDetailsService` 빈 명시 등록 |
+| Docker 앱 기동 실패 | MySQL 준비 전 앱 먼저 시작 | `healthcheck` + `depends_on: service_healthy` |
+| Swagger 500 에러 | Springdoc 2.3.0 / Spring Boot 4.0 비호환 | Springdoc 3.0.3 업그레이드 |
 
-Spring Boot 4.x에서 `UserDetailsService` 빈을 등록하지 않으면 `InMemoryUserDetailsManager`가 자동 설정되어 JWT 필터와 충돌합니다. JWT 기반 Stateless 인증에서는 `UserDetailsService`가 실제로 필요 없으므로, 예외를 던지는 빈을 명시적으로 등록해 자동설정을 비활성화했습니다.
-
-```java
-@Bean
-public UserDetailsService userDetailsService() {
-    return username -> { throw new UsernameNotFoundException(username); };
-}
-```
-
----
-
-### Docker Compose healthcheck로 기동 순서 보장
-
-앱 컨테이너가 MySQL보다 먼저 기동되면 `Connection refused`로 즉시 종료됩니다. `healthcheck`와 `depends_on: condition: service_healthy` 조합으로 MySQL이 완전히 준비된 후에만 앱이 시작됩니다.
-
-```yaml
-db:
-  healthcheck:
-    test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-    interval: 10s
-    retries: 5
-
-app:
-  depends_on:
-    db:
-      condition: service_healthy
-```
-
----
-
-### Springdoc + Spring Boot 4.0 호환성 문제
-
-`/v3/api-docs` 요청 시 500 에러 발생. Springdoc 2.3.0은 Spring Boot 3.x 전용으로 Spring Framework 7.0을 사용하는 Spring Boot 4.0과 내부 클래스 호환성이 없었습니다. Spring Boot 4.0을 공식 지원하는 **Springdoc 3.0.3**으로 업그레이드해 해결했습니다.
-
-```xml
-<!-- 변경 전 -->
-<version>2.3.0</version>
-
-<!-- 변경 후 -->
-<version>3.0.3</version>
-```
+자세한 경위와 해결 과정 → [Notion](https://app.notion.com/p/37a40491425b80d88940e952778e1b63)
 
 <br>
 

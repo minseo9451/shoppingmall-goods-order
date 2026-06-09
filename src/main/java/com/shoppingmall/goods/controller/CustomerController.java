@@ -4,6 +4,7 @@ import com.shoppingmall.goods.Service.CustomerService;
 import com.shoppingmall.goods.dto.CustomerResponseDto;
 import com.shoppingmall.goods.entity.Customer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ public class CustomerController {
     private final CustomerService customerService;
     private final PasswordEncoder passwordEncoder;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<CustomerResponseDto> findAll(){
         return customerService.findAll().stream()
@@ -39,6 +41,7 @@ public class CustomerController {
         return new CustomerResponseDto(saved.getUserId(), saved.getUserName(), saved.getRegDate(), saved.getRole());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{userId}")
     public void delete(@PathVariable String userId){
         customerService.deleteById(userId);

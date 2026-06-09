@@ -4,12 +4,14 @@ import com.shoppingmall.goods.Repository.CartRepository;
 import com.shoppingmall.goods.entity.Cart;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CartService {
 
     private final CartRepository cartRepository;
@@ -18,6 +20,7 @@ public class CartService {
         return cartRepository.findByUserId(userId);
     }
 
+    @Transactional
     public Cart save(Cart cart) {
         Optional<Cart> existing = cartRepository.findByUserIdAndGoodsId(cart.getUserId(), cart.getGoodsId());
         if (existing.isPresent()) {
@@ -28,6 +31,7 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
+    @Transactional
     public void deleteById(Integer cartId) {
         cartRepository.deleteById(cartId);
     }

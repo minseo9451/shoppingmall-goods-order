@@ -5,11 +5,13 @@ import com.shoppingmall.goods.entity.Goods;
 import com.shoppingmall.goods.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GoodsService {
 
     private final GoodsRepository goodsRepository;
@@ -23,10 +25,12 @@ public class GoodsService {
                 .orElseThrow(() -> new NotFoundException("상품을 찾을 수 없습니다: " + goodsId));
     }
 
+    @Transactional
     public Goods save(Goods goods){
         return goodsRepository.save(goods);
     }
 
+    @Transactional
     public void deleteById(String goodsId){
         goodsRepository.deleteById(goodsId);
     }

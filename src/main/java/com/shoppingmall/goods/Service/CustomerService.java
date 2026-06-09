@@ -5,15 +5,18 @@ import com.shoppingmall.goods.entity.Customer;
 import com.shoppingmall.goods.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
+
     public List<Customer> findAll() {
         return customerRepository.findAll();
     }
@@ -27,10 +30,12 @@ public class CustomerService {
         return customerRepository.existsById(userId);
     }
 
+    @Transactional
     public Customer save(Customer customer) {
         return customerRepository.save(customer);
     }
 
+    @Transactional
     public void deleteById(String userId) {
         customerRepository.deleteById(userId);
     }

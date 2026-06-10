@@ -116,13 +116,13 @@ POST /order
   └── 5. 재고 차감
 ```
 
-재고 검증을 저장 전에 몰아서 처리함으로써, 일부만 저장된 채 롤백되는 부분 실패 상황을 방지했습니다.
+재고 검증을 저장 전에 몰아서 처리함으로써, **일부만 저장된 채 롤백되는 부분 실패 상황**을 방지했습니다.
 
 ---
 
 ### 비관적 락으로 재고 동시성 제어
 
-동시 주문 요청이 들어오면 재고를 읽는 순간 `SELECT FOR UPDATE`로 행을 잠가, Race Condition으로 인한 재고 음수를 방지합니다.
+동시 주문 요청이 들어오면 재고를 읽는 순간 `SELECT FOR UPDATE`로 행을 잠가, **Race Condition으로 인한 재고 음수**를 방지합니다.
 
 ```java
 @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -130,7 +130,7 @@ POST /order
 Optional<Goods> findByIdForUpdate(@Param("goodsId") String goodsId);
 ```
 
-트랜잭션 A가 상품 행을 잠그면, 트랜잭션 B는 A가 커밋/롤백될 때까지 대기합니다.
+트랜잭션 A가 상품 행을 잠그면, **트랜잭션 B는 A가 커밋/롤백될 때까지 대기**합니다.
 
 ---
 
@@ -152,7 +152,7 @@ public ResponseEntity<ApiResponse<Goods>> create(@RequestBody Goods goods) { ...
 
 ### 전역 예외 처리
 
-`@RestControllerAdvice(basePackages = "...")`로 예외를 중앙에서 처리하고, 커스텀 예외 클래스로 에러 원인을 명확히 구분합니다.
+`@RestControllerAdvice(basePackages = "...")`로 예외를 **중앙에서 처리**하고, **커스텀 예외 클래스**로 에러 원인을 명확히 구분합니다.
 
 | 예외 | 상태코드 | 발생 상황 |
 |------|---------|----------|
@@ -175,7 +175,7 @@ JWT 토큰 상태별 응답도 `JwtFilter`에서 명확히 구분합니다.
 
 ### 통일된 API 응답 포맷
 
-모든 성공 응답을 `ApiResponse<T>`로 감싸고 HTTP 상태코드를 정규화했습니다.
+모든 성공 응답을 `ApiResponse<T>`로 감싸고 **HTTP 상태코드를 정규화**했습니다.
 
 ```json
 { "status": 200, "message": "ok", "data": { ... } }
@@ -192,7 +192,7 @@ JWT 토큰 상태별 응답도 `JwtFilter`에서 명확히 구분합니다.
 
 ### 서비스 레이어 트랜잭션 정비
 
-모든 서비스 클래스에 `@Transactional(readOnly = true)`를 클래스 레벨에 선언하고, 쓰기 메서드만 `@Transactional`로 개별 오버라이드했습니다. `readOnly = true`는 Hibernate의 dirty checking을 생략해 조회 성능을 높입니다.
+모든 서비스 클래스에 `@Transactional(readOnly = true)`를 클래스 레벨에 선언하고, 쓰기 메서드만 `@Transactional`로 개별 오버라이드했습니다. `readOnly = true`는 Hibernate의 **dirty checking을 생략**해 **조회 성능**을 높입니다.
 
 ```java
 @Transactional(readOnly = true)      // 기본값 — 조회 메서드 전체 적용
@@ -207,7 +207,7 @@ public class OrderService {
 
 ### Bean Validation으로 입력값 검증
 
-컨트롤러에서 `@Valid`를 선언하면 DTO의 제약 조건을 자동으로 검증합니다. Service 계층이 아닌 DTO에 제약 조건을 선언함으로써, 유효하지 않은 요청이 비즈니스 로직에 도달하기 전에 차단됩니다.
+컨트롤러에서 `@Valid`를 선언하면 DTO의 제약 조건을 자동으로 검증합니다. **Service 계층이 아닌 DTO**에 제약 조건을 선언함으로써, 유효하지 않은 요청이 **비즈니스 로직에 도달하기 전에 차단**됩니다.
 
 ```java
 @NotBlank(message = "아이디를 입력해주세요.")
@@ -219,7 +219,7 @@ private String userId;
 
 ### 회원가입 아이디 중복 확인
 
-저장 전에 `existsById()`로 중복 여부를 먼저 확인합니다. JPA의 `exists` 쿼리는 `SELECT 1`로 동작해 불필요한 엔티티 조회가 없습니다.
+저장 전에 `existsById()`로 중복 여부를 먼저 확인합니다. JPA의 `exists` 쿼리는 `SELECT 1`로 동작해 **불필요한 엔티티 조회가 없습니다**.
 
 ```java
 if (customerService.existsById(dto.getUserId())) {
@@ -231,7 +231,7 @@ if (customerService.existsById(dto.getUserId())) {
 
 ### 장바구니 중복 상품 수량 합산
 
-같은 상품을 다시 담을 때 새 row를 생성하지 않고 기존 항목의 수량을 누적합니다.
+같은 상품을 다시 담을 때 **새 row를 생성하지 않고** 기존 항목의 수량을 누적합니다.
 
 ```java
 Optional<Cart> existing = cartRepository.findByUserIdAndGoodsId(cart.getUserId(), cart.getGoodsId());

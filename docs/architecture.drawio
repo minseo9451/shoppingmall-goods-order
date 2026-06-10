@@ -1,0 +1,174 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="인프라 구조" id="infra">
+    <mxGraphModel dx="1300" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Developer -->
+        <mxCell id="dev" value="Developer" style="shape=person;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="390" width="70" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- GitHub -->
+        <mxCell id="gh" value="GitHub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="180" y="400" width="110" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- git push -->
+        <mxCell id="e-push" value="git push" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="dev" target="gh" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- GitHub Actions -->
+        <mxCell id="ga" value="GitHub Actions" style="swimlane;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="360" y="330" width="220" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="ga1" value="① Maven Build" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffacd;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="ga">
+          <mxGeometry x="15" y="40" width="190" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="ga2" value="② SCP (jar, Dockerfile, nginx.conf)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffacd;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="ga">
+          <mxGeometry x="15" y="86" width="190" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="ga3" value="③ SSH (docker build + compose up)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffacd;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="ga">
+          <mxGeometry x="15" y="132" width="190" height="36" as="geometry"/>
+        </mxCell>
+
+        <!-- trigger -->
+        <mxCell id="e-trigger" value="push trigger" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="gh" target="ga" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- AWS EC2 -->
+        <mxCell id="ec2" value="AWS EC2 (ap-northeast-2)" style="swimlane;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="660" y="220" width="500" height="420" as="geometry"/>
+        </mxCell>
+
+        <!-- Nginx -->
+        <mxCell id="nginx" value="Nginx (Port 80 / 443)  |  Let's Encrypt SSL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;" vertex="1" parent="ec2">
+          <mxGeometry x="100" y="45" width="300" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Docker Compose -->
+        <mxCell id="dc" value="Docker Compose" style="swimlane;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=12;startSize=28;" vertex="1" parent="ec2">
+          <mxGeometry x="60" y="140" width="380" height="250" as="geometry"/>
+        </mxCell>
+
+        <!-- Spring App -->
+        <mxCell id="app" value="Spring Boot App&#xa;:8080" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" vertex="1" parent="dc">
+          <mxGeometry x="25" y="50" width="150" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- MySQL -->
+        <mxCell id="mysql" value="MySQL 8.0&#xa;:3306" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=12;" vertex="1" parent="dc">
+          <mxGeometry x="205" y="50" width="150" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- mysql_data -->
+        <mxCell id="vol" value="mysql_data (Volume)" style="shape=mxgraph.flowchart.stored_data;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="dc">
+          <mxGeometry x="205" y="170" width="150" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- depends_on -->
+        <mxCell id="e-dep" value="depends_on&#xa;(healthcheck)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="app" target="mysql" parent="dc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- volume mount -->
+        <mxCell id="e-vol" value="mount" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="mysql" target="vol" parent="dc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- proxy_pass -->
+        <mxCell id="e-proxy" value="proxy_pass :8080" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="nginx" target="app" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Deploy -->
+        <mxCell id="e-deploy" value="SSH / SCP" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="ga" target="ec2" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Client -->
+        <mxCell id="client" value="Client (Browser)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="840" y="100" width="160" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- HTTPS -->
+        <mxCell id="e-https" value="HTTPS&#xa;goodsorder.n-e.kr" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="client" target="nginx" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="시스템 구조" id="system">
+    <mxGraphModel dx="1300" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Client -->
+        <mxCell id="sc" value="Client (Browser)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="320" y="30" width="180" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- Nginx -->
+        <mxCell id="sn" value="Nginx (Port 80 / 443)  |  Let's Encrypt SSL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="230" y="145" width="360" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- Spring Boot App container -->
+        <mxCell id="sa" value="Spring Boot Application" style="swimlane;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;startSize=32;" vertex="1" parent="1">
+          <mxGeometry x="130" y="260" width="560" height="360" as="geometry"/>
+        </mxCell>
+
+        <!-- JWT Filter -->
+        <mxCell id="sa1" value="Security Layer  |  JwtFilter  (토큰 검증 / Role 추출 / 401·403 처리)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="sa">
+          <mxGeometry x="40" y="45" width="480" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Controllers -->
+        <mxCell id="sa2" value="Controller Layer  |  Auth · Customer · Goods · Order · Cart&#xa;@PreAuthorize  ·  @Valid  ·  ApiResponse&lt;T&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="sa">
+          <mxGeometry x="40" y="115" width="480" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- Services -->
+        <mxCell id="sa3" value="Service Layer  |  @Transactional(readOnly=true)&#xa;비관적 락 (재고 동시성)  ·  전역 예외 처리" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="sa">
+          <mxGeometry x="40" y="192" width="480" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- Repositories -->
+        <mxCell id="sa4" value="Repository Layer  |  Spring Data JPA&#xa;@Lock(PESSIMISTIC_WRITE)  ·  existsById  ·  findByUserIdAndGoodsId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="sa">
+          <mxGeometry x="40" y="270" width="480" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- MySQL -->
+        <mxCell id="sdb" value="MySQL 8.0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="330" y="685" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="se1" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="sc" target="sn" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="se2" value="proxy_pass :8080" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="sn" target="sa1" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="se3" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="sa1" target="sa2" parent="sa">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="se4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="sa2" target="sa3" parent="sa">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="se5" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" source="sa3" target="sa4" parent="sa">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="se6" value="JDBC / SQL" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" source="sa4" target="sdb" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
